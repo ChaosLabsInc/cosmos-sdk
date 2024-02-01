@@ -1,0 +1,10 @@
+syntax = "proto3";
+package proto.oracle.abci.v1;
+
+option go_package = "cosmossdk.io/simapp/abci/votes/types";
+
+// PriceVoteExtension defines the vote extension structure for oracle prices.
+message PriceVoteExtension {
+  // Prices defines a map of feed -> price.Bytes() .
+  map<string, bytes> prices = 1;
+}

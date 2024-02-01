@@ -1,4 +1,4 @@
-package simapp
+package votes
 
 import (
 	"bytes"

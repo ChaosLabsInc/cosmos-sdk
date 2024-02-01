@@ -35,6 +35,22 @@ cp -r github.com/cosmos/cosmos-sdk/* ./
 cp -r cosmossdk.io/** ./
 rm -rf github.com cosmossdk.io
 
+echo "Generating Oracle proto code..."
+cd simapp
+proto_dirs=$(find ./proto -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | sort | uniq)
+for dir in $proto_dirs; do
+  for file in $(find "${dir}" -maxdepth 1 -name '*.proto'); do
+    if grep go_package $file &> /dev/null ; then
+      buf generate --template buf.gen.gogo.yaml $file
+    fi
+  done
+done
+
+cd ..
+
+cp -r cosmossdk.io/** ./
+rm -rf cosmossdk.io
+
 go mod tidy
 
 ./scripts/protocgen-pulsar.sh
