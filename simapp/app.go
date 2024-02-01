@@ -19,6 +19,7 @@ import (
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/log"
+	"cosmossdk.io/simapp/abci/votes"
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/accounts"
 	"cosmossdk.io/x/accounts/accountstd"
@@ -244,12 +245,13 @@ func NewSimApp(
 
 	// create and set dummy vote extension handler
 	voteExtOp := func(bApp *baseapp.BaseApp) {
-		voteExtHandler := NewVoteExtensionHandler()
+		voteExtHandler := votes.NewVoteExtensionHandler()
 		voteExtHandler.SetHandlers(bApp)
 	}
 	baseAppOptions = append(baseAppOptions, voteExtOp, baseapp.SetOptimisticExecution())
 
 	bApp := baseapp.NewBaseApp(appName, logger, db, txConfig.TxDecoder(), baseAppOptions...)
+
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)

@@ -14,6 +14,8 @@ import (
 
 	"cosmossdk.io/depinject"
 	"cosmossdk.io/log"
+	"cosmossdk.io/simapp/abci/proposal"
+	"cosmossdk.io/simapp/abci/votes"
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/auth"
 	"cosmossdk.io/x/auth/ante/unorderedtx"
@@ -50,6 +52,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	testdata_pulsar "github.com/cosmos/cosmos-sdk/testutil/testdata/testpb"
+	"github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	consensuskeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
@@ -243,12 +246,18 @@ func NewSimApp(
 
 	// create and set dummy vote extension handler
 	voteExtOp := func(bApp *baseapp.BaseApp) {
-		voteExtHandler := NewVoteExtensionHandler()
+		voteExtHandler := votes.NewVoteExtensionHandler()
 		voteExtHandler.SetHandlers(bApp)
 	}
 	baseAppOptions = append(baseAppOptions, voteExtOp, baseapp.SetOptimisticExecution())
 
 	app.App = appBuilder.Build(db, traceStore, baseAppOptions...)
+
+	nonceMempool := mempool.NewSenderNonceMempool()
+	abciPropHandler := proposal.NewDefaultProposalHandler(app.App.Logger(), nonceMempool, app.App.BaseApp)
+	app.App.BaseApp.SetMempool(nonceMempool)
+	app.App.BaseApp.SetPrepareProposal(abciPropHandler.PrepareProposalHandler())
+	app.App.BaseApp.SetProcessProposal(abciPropHandler.ProcessProposalHandler())
 
 	// register streaming services
 	if err := app.RegisterStreamingServices(appOpts, app.kvStoreKeys()); err != nil {
